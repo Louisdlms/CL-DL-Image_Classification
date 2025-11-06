@@ -4,8 +4,6 @@ import read_cifar as rc
 
 
 def distance_matrix(m1:np.ndarray, m2:np.ndarray) :
-    m1 = np.asarray(m1, dtype=np.float32)
-    m2 = np.asarray(m2, dtype=np.float32)
     # Normes au carré
     n1 = np.sum(m1 * m1, axis=1)            # (N,)
     n2 = np.sum(m2 * m2, axis=1)            # (M,)
@@ -34,7 +32,6 @@ def knn_predict(dists, labels_train, k):
     for i in range(knn_labels.shape[0]):
         counts = np.bincount(knn_labels[i])
         preds[i] = counts.argmax()
-
     return preds
 
 def evaluate_knn(data_train, labels_train, data_test, labels_test, k, batch_size=128):
@@ -49,13 +46,8 @@ def evaluate_knn(data_train, labels_train, data_test, labels_test, k, batch_size
     return float(np.mean(preds_all == labels_test))
 
 if __name__ == "__main__":
-    # Charger CIFAR-10 (format python) via ton module rc puis split 90/10
     data, labels = rc.read_cifar('data/cifar-10-batches-py')
     data_train, labels_train, data_test, labels_test = rc.split_dataset(data, labels, 0.9)
-
-    # Optionnel: sous-échantillon pour accélérer le run si tu es limité en RAM/temps
-    # data_train, labels_train = data_train[:5000], labels_train[:5000]
-    # data_test,  labels_test  = data_test[:1000],  labels_test[:1000]
 
     ks = list(range(1, 21))
     accuracies = []
@@ -64,7 +56,6 @@ if __name__ == "__main__":
         print(f"k={k}: accuracy={acc:.4f}")
         accuracies.append(acc)
 
-    # Tracé et sauvegarde
     plt.figure(figsize=(8, 5))
     plt.plot(ks, accuracies, marker='o')
     plt.xlabel('k')
@@ -72,4 +63,4 @@ if __name__ == "__main__":
     plt.title('k-NN accuracy vs k (split=0.9)')
     plt.xticks(ks)
     plt.grid(True, linestyle='--', alpha=0.5)
-    plt.show()
+    plt.savefig('Plots/knn_accuracy.png')
