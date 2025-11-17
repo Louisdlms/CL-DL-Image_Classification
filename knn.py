@@ -1,66 +1,108 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import read_cifar as rc
 
-
-def distance_matrix(m1:np.ndarray, m2:np.ndarray) :
-    # Normes au carré
-    n1 = np.sum(m1 * m1, axis=1)            # (N,)
-    n2 = np.sum(m2 * m2, axis=1)            # (M,)
-    # Distances au carré via (a-b)^2 = a^2 + b^2 - 2ab
-    d2 = n1[:, None] + n2[None, :] - 2.0 * (m1 @ m2.T)
-    # Garde numérique: clamp les petites valeurs négatives à 0
-    dists = np.maximum(d2, 0.0, out=d2)
+def distance_matrix(X: np.ndarray, Y: np.ndarray) -> np.ndarray:
+    """
+    Calcule la matrice des distances L2 entre chaque vecteur de X et chaque vecteur de Y.
+    
+    Paramètres :
+    X (np.ndarray) : matrice de taille (n_samples_X, n_features)
+    Y (np.ndarray) : matrice de taille (n_samples_Y, n_features)
+    
+    Retour :
+    dists (np.ndarray) : matrice de distances de taille (n_samples_X, n_samples_Y)
+                          dists[i,j] = distance L2 entre X[i] et Y[j]
+    """
+    # Formule vectorisée : ||a-b||^2 = ||a||^2 + ||b||^2 - 2 a.b
+    X_square = np.sum(X**2, axis=1, keepdims=True)  # (n_samples_X, 1)
+    Y_square = np.sum(Y**2, axis=1)  # (n_samples_Y,)
+    cross_term = X @ Y.T  # (n_samples_X, n_samples_Y)
+    
+    dists = np.sqrt(X_square + Y_square - 2 * cross_term)
     return dists
 
 
-def knn_predict(dists, labels_train, k):
-    # Indices des k plus proches voisins pour chaque test (ordre croissant de distance)
-    idx = np.argpartition(dists, kth=k-1, axis=1)[:, :k]  # plus rapide que argsort complet
-    # Pour être sûr d’un tri total des k plus proches (optionnel):
-    # on trie localement ces k indices selon la distance réelle
-    row_idx = np.arange(dists.shape[0])[:, None]
-    local_order = np.argsort(dists[row_idx, idx], axis=1)
-    knn_idx = idx[row_idx, local_order]  # (N_test, k)
+def knn_predict(dists: np.ndarray, labels_train: np.ndarray, k: int) -> np.ndarray:
+    """
+    Prédit les labels des données test à partir de la matrice de distances et des labels d'entraînement.
+    
+    Paramètres :
+    dists (np.ndarray) : matrice des distances entre train et test (n_test, n_train)
+    labels_train (np.ndarray) : labels des données d'entraînement
+    k (int) : nombre de voisins
+    
+    Retour :
+    pred_labels (np.ndarray) : labels prédits pour les données test
+    """
+    n_test = dists.shape[0]
+    pred_labels = np.zeros(n_test, dtype=np.int64)
+    
+    # Sélection rapide des k plus proches voisins
+    knn_idx = np.argpartition(dists, kth=k-1, axis=1)[:, :k]  # indices des k plus proches
 
-    # Récupération des labels des k voisins
-    knn_labels = labels_train[knn_idx]  # (N_test, k)
+    # Récupérer les labels et voter
+    knn_labels = labels_train[knn_idx]  # (n_test, k)
+    for i in range(n_test):
+        pred_labels[i] = np.bincount(knn_labels[i]).argmax()
+    
+    return pred_labels
 
-    # Vote majoritaire par ligne via np.bincount
-    # On applique ligne par ligne, np.bincount nécessite des entiers >= 0
-    preds = np.empty(knn_labels.shape[0], dtype=labels_train.dtype)
-    for i in range(knn_labels.shape[0]):
-        counts = np.bincount(knn_labels[i])
-        preds[i] = counts.argmax()
-    return preds
 
-def evaluate_knn(data_train, labels_train, data_test, labels_test, k, batch_size=128):
-    N_test = data_test.shape[0]
-    preds_parts = []
-    for start in range(0, N_test, batch_size):
-        stop = start + batch_size
-        dists = distance_matrix(data_test[start:stop], data_train)
-        preds = knn_predict(dists, labels_train, k)
-        preds_parts.append(preds)
-    preds_all = np.concatenate(preds_parts, axis=0)
-    return float(np.mean(preds_all == labels_test))
+def evaluate_knn(data_train: np.ndarray, labels_train: np.ndarray,
+                 data_test: np.ndarray, labels_test: np.ndarray,
+                 k: int, batch_size: int = 500) -> float:
+    """
+    Évalue le classifieur KNN en calculant le taux de bonnes classifications (accuracy).
+    Utilise des sous-batchs pour accélérer le calcul et réduire l'utilisation mémoire.
+
+    Paramètres :
+    data_train, labels_train : données et labels d'entraînement
+    data_test, labels_test : données et labels de test
+    k : nombre de voisins
+    batch_size : nombre d'exemples test à traiter simultanément
+
+    Retour :
+    accuracy (float) : taux de bonnes classifications
+    """
+    n_test = data_test.shape[0]
+    pred_labels = np.zeros(n_test, dtype=np.int64)
+
+    # Boucle sur les sous-batchs de test
+    for start in range(0, n_test, batch_size):
+        end = min(start + batch_size, n_test)
+        batch_test = data_test[start:end]
+        # Calculer la matrice des distances pour ce batch uniquement
+        dists = distance_matrix(batch_test, data_train)
+        # Prédire les labels pour ce batch
+        pred_labels[start:end] = knn_predict(dists, labels_train, k)
+
+    # Calculer l'accuracy finale
+    accuracy = np.mean(pred_labels == labels_test)
+    return accuracy
+
+
 
 if __name__ == "__main__":
-    data, labels = rc.read_cifar('data/cifar-10-batches-py')
-    data_train, labels_train, data_test, labels_test = rc.split_dataset(data, labels, 0.9)
+    # Exemple d'utilisation avec un petit sous-ensemble pour tester
+    from read_cifar import read_cifar, split_dataset
 
-    ks = list(range(1, 21))
+    all_data, all_labels = read_cifar("data/cifar-10-batches-py")
+    data_train, labels_train, data_test, labels_test = split_dataset(all_data, all_labels, split=0.9)
+
+    # Tester différentes valeurs de k
+    import matplotlib.pyplot as plt
+
+    ks = range(1, 21)
     accuracies = []
     for k in ks:
-        acc = evaluate_knn(data_train, labels_train, data_test, labels_test, k, batch_size=256)
-        print(f"k={k}: accuracy={acc:.4f}")
+        acc = evaluate_knn(data_train, labels_train, data_test, labels_test, k)
+        print(f"k={k}, accuracy={acc:.4f}")
         accuracies.append(acc)
 
-    plt.figure(figsize=(8, 5))
+    # Sauvegarder le graphique
+    plt.figure()
     plt.plot(ks, accuracies, marker='o')
-    plt.xlabel('k')
-    plt.ylabel('Accuracy')
-    plt.title('k-NN accuracy vs k (split=0.9)')
-    plt.xticks(ks)
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.savefig('Plots/knn_accuracy.png')
+    plt.xlabel("k (nombre de voisins)")
+    plt.ylabel("Accuracy")
+    plt.title("KNN sur CIFAR-10")
+    plt.grid(True)
+    plt.savefig("results/knn.png")

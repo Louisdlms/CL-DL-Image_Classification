@@ -1,57 +1,114 @@
 import numpy as np
 import pickle
 
+def read_cifar_batch(batch_path: str = "data/cifar-10-batches-py/data_batch_1"):
+    """
+    Lit un batch CIFAR-10 et retourne les données et les labels.
 
-def read_cifar_batch(batch_path="data/cifar-10-batches-py/data_batch_1"):
+    Paramètres :
+    batch_path (str) : chemin vers le fichier du batch CIFAR-10.
+
+    Retour :
+    data (np.float32 array) : tableau des images de taille (batch_size x data_size)
+    labels (np.int64 array) : tableau des labels correspondant à chaque image
+    """
+    # Ouvrir le fichier du batch en mode lecture binaire
     with open(batch_path, 'rb') as f:
+        # Charger le contenu avec pickle
         batch = pickle.load(f, encoding='bytes')
+    
+    # Récupérer les données d'images et les convertir en float32
     data = batch[b'data'].astype(np.float32)
+    
+    # Récupérer les labels et les convertir en int64
     labels = np.array(batch[b'labels'], dtype=np.int64)
+    
+    # Retourner les deux tableaux
     return data, labels
 
-def read_cifar(directory_path="data/cifar-10-batches-py"):
+
+def read_cifar(directory_path: str = "data/cifar-10-batches-py"):
+    """
+    Lit tous les batches CIFAR-10 (entraînement + test) et retourne les données et labels combinés.
+
+    Paramètres :
+    directory_path (str) : chemin vers le dossier contenant les batches CIFAR-10.
+
+    Retour :
+    all_data (np.float32 array) : tableau des images (batch_size x data_size)
+    all_labels (np.int64 array) : tableau des labels (batch_size,)
+    """
     data_list = []
     labels_list = []
 
+    # Lire les 5 batches d'entraînement
     for i in range(1, 6):
         batch_path = f"{directory_path}/data_batch_{i}"
         data, labels = read_cifar_batch(batch_path)
         data_list.append(data)
         labels_list.append(labels)
-        
+    
+    # Lire le batch de test
+    test_path = f"{directory_path}/test_batch"
+    data_test, labels_test = read_cifar_batch(test_path)
+    data_list.append(data_test)
+    labels_list.append(labels_test)
+    
+    # Combiner toutes les données et labels
     all_data = np.concatenate(data_list, axis=0)
     all_labels = np.concatenate(labels_list, axis=0)
+    
     return all_data, all_labels
 
-import numpy as np
 
-def split_dataset(data: np.ndarray, labels: np.ndarray, split: float):
+def split_dataset(data: np.ndarray, labels: np.ndarray, split: float = 0.8):
+    """
+    Sépare aléatoirement les données en ensembles d'entraînement et de test.
 
-    rng = np.random.default_rng()
-    num_samples = data.shape[0]
-    indices = rng.permutation(num_samples)
+    Paramètres :
+    data (np.ndarray) : tableau des images (batch_size x data_size)
+    labels (np.ndarray) : tableau des labels correspondants
+    split (float) : fraction de données utilisée pour l'entraînement (entre 0 et 1)
 
-    split_index = int(num_samples * split)
-    train_idx = indices[:split_index]
-    test_idx = indices[split_index:]
-
-    data_train = data[train_idx]
-    labels_train = labels[train_idx]
-    data_test = data[test_idx]
-    labels_test = labels[test_idx]
-
+    Retour :
+    data_train (np.ndarray) : données d'entraînement
+    labels_train (np.ndarray) : labels d'entraînement
+    data_test (np.ndarray) : données de test
+    labels_test (np.ndarray) : labels de test
+    """
+    # Mélanger les indices
+    indices = np.arange(data.shape[0])
+    np.random.shuffle(indices)
+    
+    # Appliquer le mélange
+    data_shuffled = data[indices]
+    labels_shuffled = labels[indices]
+    
+    # Calculer la taille de l'ensemble d'entraînement
+    split_idx = int(split * data.shape[0])
+    
+    # Séparer les ensembles
+    data_train = data_shuffled[:split_idx]
+    labels_train = labels_shuffled[:split_idx]
+    data_test = data_shuffled[split_idx:]
+    labels_test = labels_shuffled[split_idx:]
+    
     return data_train, labels_train, data_test, labels_test
 
 
+
 if __name__ == "__main__":
+    # Tester la lecture d'un batch
     batch_path = "data/cifar-10-batches-py/data_batch_1"
     data, labels = read_cifar_batch(batch_path)
-    print(data.shape)
-    print(data.dtype)
+    print(f"Lecture d'un batch : data.shape = {data.shape}, data.dtype = {data.dtype}, labels.shape = {labels.shape}, labels.dtype = {labels.dtype}")
 
+    # Tester la lecture de tous les batches (entraînement + test)
     directory_path = "data/cifar-10-batches-py"
     all_data, all_labels = read_cifar(directory_path)
-    print(all_data.shape)
+    print(f"Lecture de tous les batches : all_data.shape = {all_data.shape}, all_labels.shape = {all_labels.shape}")
 
-    split = split_dataset(all_data, all_labels, split=0.8)
-    print(split[0].shape)
+    # Tester la séparation en ensembles d'entraînement et test
+    data_train, labels_train, data_test, labels_test = split_dataset(all_data, all_labels, split=0.8)
+    print(f"Ensemble d'entraînement : data_train.shape = {data_train.shape}, labels_train.shape = {labels_train.shape}")
+    print(f"Ensemble de test : data_test.shape = {data_test.shape}, labels_test.shape = {labels_test.shape}")
