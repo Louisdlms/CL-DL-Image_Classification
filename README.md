@@ -144,12 +144,6 @@ Implémentation d'un perceptron multi-couches (MLP) à une couche cachée, entra
 - `num_epoch` : nombre d'epochs d'entraînement (par défaut 100).
 - `batch_size` : taille des mini-batchs (par défaut 64, dans `train_mlp`).
 
-**Résultats attendus** :
-- L'accuracy d'entraînement augmente généralement au fil des epochs.
-- L'accuracy de test converge mais peut être inférieure à celle d'entraînement (overfitting possible).
-- Performances typiques : ~45% sur CIFAR-10 (réseau simple sans augmentation de données ni CNN).
-
-
 ## Usage et interprétation
 
 1. **Tester l'extraction des données** :
