@@ -59,7 +59,9 @@ Ce fichier contient les utilitaires pour charger et prétraiter les données CIF
 
 ### `knn.py`
 
-Implémentation vectorisée d'un classifieur K-Nearest Neighbors pour la classification multi-classe.
+Pour commencer, on a choisi d’utiliser une méthode simple et intuitive : le k-Nearest Neighbors (KNN). L’idée est de classer chaque image du jeu de données CIFAR-10 en fonction des images qui lui ressemblent le plus dans l’ensemble d’entraînement. Concrètement, pour une nouvelle image, on cherche ses k plus proches voisins (d’où le nom de la méthode) et on lui attribue la classe majoritaire parmi ces voisins.
+
+Ce fichier contient l'implémentation vectorisée d'un classifieur K-Nearest Neighbors pour la classification multi-classe.
 
 **Fonctions principales** :
 
@@ -88,8 +90,9 @@ Implémentation vectorisée d'un classifieur K-Nearest Neighbors pour la classif
 
 
 ### `mlp.py`
+Pour améliorer les résultats, on a testé un réseau de neurones à une couche cachée (MLP). Contrairement au KNN, qui compare directement les pixels des images, le MLP apprend à reconnaître des motifs plus complexes en transformant les données à travers ses neurones.
 
-Implémentation d'un perceptron multi-couches (MLP) à une couche cachée, entraîné par rétropropagation avec descente de gradient.
+Ce fichier contient l'implémentation d'un perceptron multi-couches (MLP) à une couche cachée, entraîné par backpropagation avec descente de gradient.
 
 **Fonctions principales** :
 
@@ -159,7 +162,8 @@ Implémentation d'un perceptron multi-couches (MLP) à une couche cachée, entra
    Génère `results/knn.png`. Observez comment l'accuracy change avec `k`.
 
 **Résultats observés** :
-- Sur CIFAR-10 avec pixels bruts, les performances restent modestes (~30-35%) car KNN est assez peu adapté aux traitements d'images.
+- Sur CIFAR-10 avec pixels bruts, les performances restent modestes (~30-35%).
+- Le meilleur résultat obtenu est pour k = 1. Cela s’explique par le fait qu’en ne considérant qu’un seul voisin, on évite d’inclure des images trop différentes ou mal classées dans le calcul, ce qui arrive souvent avec des valeurs de k plus élevées.
 
 3. **Tester MLP** :
    ```bash
