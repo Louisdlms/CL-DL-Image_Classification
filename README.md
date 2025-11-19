@@ -103,15 +103,14 @@ Implémentation d'un perceptron multi-couches (MLP) à une couche cachée, entra
 
 - **`learn_once_mse(w1, b1, w2, b2, data, targets, learning_rate)`** :
   - Effectue une étape de gradient descendant avec **MSE (Mean Squared Error)** comme fonction coût.
-  - Forward pass : données → couche cachée (sigmoid) → couche de sortie (sigmoid).
-  - Backward pass : calcul des gradients via rétropropagation.
-  - Update : $w \leftarrow w - \text{learning\_rate} \times \nabla w$.
+  - Forward pass
+  - Backward pass
   - Retourne : les poids/biais mis à jour et la valeur de la MSE.
 
 - **`learn_once_cross_entropy(w1, b1, w2, b2, data, targets, learning_rate)`** :
   - Étape de gradient avec **cross-entropy** pour la classification multi-classe.
-  - Forward pass : données → couche cachée (sigmoid) → couche de sortie avec **softmax**.
-  - Softmax : $a_i = \frac{e^{z_i}}{\sum_j e^{z_j}}$ (probabilités normalisées).
+  - Forward pass
+  - Softmax : $a_i = \frac{e^{z_i}}{\sum_j e^{z_j}}$.
   - Loss cross-entropy : $-\sum_i y_i \log(a_i)$.
   - Backward pass : gradients calculés en tenant compte du softmax.
   - Retourne : les poids/biais mis à jour et la valeur de la cross-entropy.
