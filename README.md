@@ -128,7 +128,7 @@ Implémentation d'un perceptron multi-couches (MLP) à une couche cachée, entra
 
 - **`run_mlp_training(data_train, labels_train, data_test, labels_test, d_h=64, learning_rate=0.1, num_epoch=100)`** :
   - réalise les 3 étapes suivantes : initialisation, entraînement, évaluation.
-  - Initialisation aléatoire : $w \sim U(-1, 1)$, $b = 0$.
+  - Initialisation aléatoire via random
   - Normalisation : données divisées par 255 (correspondant à la valeur max pour un pixel donné).
   - Retourne : la liste des accuracies d'entraînement et l'accuracy finale sur test.
 
