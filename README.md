@@ -111,7 +111,7 @@ Implémentation d'un perceptron multi-couches (MLP) à une couche cachée, entra
   - Étape de gradient avec **cross-entropy** pour la classification multi-classe.
   - Forward pass
   - Softmax : $a_i = \frac{e^{z_i}}{\sum_j e^{z_j}}$.
-  - Loss cross-entropy : $-\sum_i y_i \log(a_i)$.
+  - Loss cross-entropy.
   - Backward pass : gradients calculés en tenant compte du softmax.
   - Retourne : les poids/biais mis à jour et la valeur de la cross-entropy.
 
