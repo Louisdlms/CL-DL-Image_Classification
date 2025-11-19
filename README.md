@@ -41,14 +41,14 @@ Ce fichier contient les utilitaires pour charger et prétraiter les données CIF
 
 - **`read_cifar_batch(batch_path)`** : 
   - Lit un fichier batch CIFAR-10 à l'aide de `pickle`.
-   - Convertit les données en `float32` et labels en `int64`.
+  - Convertit les données en `float32` et labels en `int64`.
   - Retourne la matrice des images (taille : `(batch_size, 3072)`).
  
 
 - **`read_cifar(directory_path)`** : 
   - Boucle sur les 5 fichiers d'entraînement (`data_batch_1..5`) et le fichier de test (`test_batch`).
   - Concatène toutes les données en un seul tableau NumPy.
-  - Retourne : données complètes (~60 000 images) et labels correspondants.
+  - Retourne : données complètes et labels correspondants.
 
 - **`split_dataset(data, labels, split=0.8)`** :
   - Mélange aléatoirement les indices des données.
@@ -102,17 +102,17 @@ Ce fichier contient l'implémentation d'un perceptron multi-couches (MLP) à une
 
 - **`one_hot(labels)`** :
   - Convertit un vecteur de labels en matrice one-hot.
-  - Exemple : label `[1, 2, 0]` → matrice `(3, 3)` avec 1 dans les positions correspondantes.
+  - Exemple : le label `[1, 2, 0]` donne une matrice `(3, 3)` avec 1 dans les positions correspondantes.
 
 - **`learn_once_mse(w1, b1, w2, b2, data, targets, learning_rate)`** :
   - Effectue une étape de gradient descendant avec **MSE (Mean Squared Error)** comme fonction coût.
-  - Forward pass
-  - Backward pass
+  - Forward pass.
+  - Backward pass à partir des différentes étapes de calcul données dans l'enoncé.
   - Retourne : les poids/biais mis à jour et la valeur de la MSE.
 
 - **`learn_once_cross_entropy(w1, b1, w2, b2, data, targets, learning_rate)`** :
-  - Étape de gradient avec **cross-entropy** pour la classification multi-classe.
-  - Forward pass
+  - Effectue une étape de gradient descendant avec **cross-entropy** pour la classification multi-classe.
+  - Forward pass.
   - Softmax : $a_i = \frac{e^{z_i}}{\sum_j e^{z_j}}$.
   - Loss cross-entropy.
   - Backward pass : gradients calculés en tenant compte du softmax.
@@ -174,5 +174,5 @@ Ce fichier contient l'implémentation d'un perceptron multi-couches (MLP) à une
 **Résultats observés** :
 - L'accuracy d'entraînement augmente au fil des epochs et semble converger.
 - L'accuracy de test est légèrement plus faible que celle d'entrainement mais néanmoins très proche donc pas d'overfitting.
-- On obtient finalement ~45% d'accuracy sur CIFAR-10 avec le mini-batching contre 18% sans. Ces résultats relativement faiblent s'expliquent par la simplicité du modèle : une seule couche cachée de 64 neurones.
+- On obtient finalement ~45% d'accuracy sur CIFAR-10 avec le mini-batching contre ~18% sans. Ces résultats relativement faiblent s'expliquent par la simplicité du modèle : une seule couche cachée de 64 neurones.
 
