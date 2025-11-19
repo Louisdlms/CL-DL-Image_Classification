@@ -5,48 +5,20 @@ from warnings import filterwarnings
 filterwarnings("ignore")
 
 def sigmoid(x: np.ndarray) -> np.ndarray:
-    """Fonction sigmoïde appliquée élément par élément."""
-    return 1 / (1 + np.exp(-x))
+    return 1 / (1 + np.exp(-x) + 1e-8)
 
 def sigmoid_derivative(a: np.ndarray) -> np.ndarray:
-    """Dérivée de la sigmoïde en fonction de sa sortie a."""
     return a * (1 - a)
     
 
-def one_hot(labels: np.ndarray, num_classes: int = None) -> np.ndarray:
-    """
-    Convertit un vecteur de labels en matrice one-hot.
-    
-    Paramètres :
-    labels (np.ndarray) : vecteur de labels de taille (batch_size,)
-    num_classes (int) : nombre de classes (optionnel, calculé à partir des labels si None)
-    
-    Retour :
-    one_hot_matrix (np.ndarray) : matrice de taille (batch_size, num_classes)
-    """
+def one_hot(labels: np.ndarray) -> np.ndarray:
     labels = np.array(labels, dtype=int)
-    if num_classes is None:
-        num_classes = labels.max() + 1
+    num_classes = labels.max() + 1
     one_hot_matrix = np.zeros((labels.size, num_classes), dtype=np.float32)
     one_hot_matrix[np.arange(labels.size), labels] = 1
     return one_hot_matrix
 
 def learn_once_mse(w1, b1, w2, b2, data, targets, learning_rate):
-    """
-    Effectue une étape de gradient descent pour un MLP à 1 hidden layer
-    avec MSE comme fonction de coût (pour la régression).
-    
-    Paramètres :
-    w1, b1 : poids et biais de la couche cachée
-    w2, b2 : poids et biais de la couche de sortie
-    data : matrice d'entrée (batch_size x d_in)
-    targets : matrice de sorties désirées (batch_size x d_out)
-    learning_rate : taux d'apprentissage
-    
-    Retour :
-    w1, b1, w2, b2 : poids et biais mis à jour
-    loss : valeur du MSE pour monitoring
-    """
     # Forward pass
     a0 = data
     z1 = a0 @ w1 + b1
@@ -66,11 +38,11 @@ def learn_once_mse(w1, b1, w2, b2, data, targets, learning_rate):
     da2_dz2 = sigmoid_derivative(a2)
     dz2_dw2 = a1.T
     
-    dz2 = dC_da2 * da2_dz2  # ∂C/∂Z2
+    dz2 = dC_da2 * da2_dz2
     dw2 = dz2.T @ a1
     db2 = np.sum(dz2, axis=0, keepdims=True)
     
-    dz1 = (dz2 @ w2.T) * sigmoid_derivative(a1)  # ∂C/∂Z1
+    dz1 = (dz2 @ w2.T) * sigmoid_derivative(a1)
     dw1 = a0.T @ dz1
     db1 = np.sum(dz1, axis=0, keepdims=True)
     
@@ -83,24 +55,7 @@ def learn_once_mse(w1, b1, w2, b2, data, targets, learning_rate):
     return w1, b1, w2, b2, loss
 
 def learn_once_cross_entropy(w1, b1, w2, b2, data, targets, learning_rate):
-    """
-    Effectue une étape de gradient descent pour un MLP à 1 hidden layer
-    avec cross-entropy comme fonction de coût (classification multi-classes).
-    Utilise softmax pour la couche de sortie.
-    
-    Paramètres :
-    w1, b1 : poids et biais de la couche cachée
-    w2, b2 : poids et biais de la couche de sortie
-    data : matrice d'entrée (batch_size x d_in)
-    tragets : vecteur de labels (batch_size, d_out))
-    learning_rate : taux d'apprentissage
-    
-    Retour :
-    w1, b1, w2, b2 : poids et biais mis à jour
-    loss : valeur du cross-entropy pour monitoring
-    """
     batch_size = data.shape[0]
-    num_classes = np.max(targets) + 1
     Y = targets 
 
     # Forward pass
@@ -136,10 +91,6 @@ def learn_once_cross_entropy(w1, b1, w2, b2, data, targets, learning_rate):
     return w1, b1, w2, b2, loss
 
 def train_mlp(w1, b1, w2, b2, data_train, labels_train, learning_rate, num_epoch):
-    """
-    Entraîne le MLP pendant num_epoch étapes.
-    Retourne poids/biais mis à jour et accuracies d'entraînement par epoch.
-    """
     train_accuracies = []
     batch_size = 64
     for epoch in range(1, num_epoch + 1):
@@ -147,6 +98,7 @@ def train_mlp(w1, b1, w2, b2, data_train, labels_train, learning_rate, num_epoch
             batch_data = data_train[i: i + batch_size]
             batch_labels = labels_train[i: i + batch_size]
             w1, b1, w2, b2, loss = learn_once_cross_entropy(w1, b1, w2, b2, batch_data, batch_labels, learning_rate)
+        
         # Prédiction sur train pour accuracy
         z1 = data_train @ w1 + b1
         a1 = sigmoid(z1)
@@ -155,14 +107,13 @@ def train_mlp(w1, b1, w2, b2, data_train, labels_train, learning_rate, num_epoch
         a2 = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
         preds = np.mean(np.argmax(a2, axis=1) == np.argmax(labels_train, axis=1))
         train_accuracies.append(preds)
+        
         if epoch % 10 == 0 :
             print(f"Epoch {epoch}: loss={loss:.4f}, train_accuracy={preds:.4f}")
+
     return w1, b1, w2, b2, train_accuracies
 
 def test_mlp(w1, b1, w2, b2, data_test, labels_test):
-    """
-    Teste le MLP et retourne l'accuracy sur les données test.
-    """
     # Layer 1
     z1 = data_test @ w1 + b1
     a1 = sigmoid(z1)
@@ -178,13 +129,10 @@ def test_mlp(w1, b1, w2, b2, data_test, labels_test):
     return accuracy
 
 def run_mlp_training(data_train, labels_train, data_test, labels_test, d_h=64, learning_rate=0.1, num_epoch=100):
-    """
-    Entraîne un MLP et retourne l'évolution des accuracies et l'accuracy finale test.
-    """
     d_in = data_train.shape[1]
-    num_classes = np.max(labels_train) + 1
-    d_out = num_classes
-    labels_train = one_hot(labels_train, num_classes)
+    np.max(labels_train) + 1
+    d_out = np.max(labels_train) + 1
+    labels_train = one_hot(labels_train)
     
     # Initialisation aléatoire
     w1 = 2 * np.random.rand(d_in, d_h) - 1
@@ -203,37 +151,6 @@ def run_mlp_training(data_train, labels_train, data_test, labels_test, d_h=64, l
 
 
 if __name__ == "__main__":
-
-    # Test forward pass
-
-    N = 30  # number of input data
-    d_in = 3  # input dimension
-    d_h = 3  # number of neurons in the hidden layer
-    d_out = 2  # output dimension (number of neurons of the output layer)
-
-    # Random initialization of the network weights and biaises
-    w1 = 2 * np.random.rand(d_in, d_h) - 1  # first layer weights
-    b1 = np.zeros((1, d_h))  # first layer biaises
-    w2 = 2 * np.random.rand(d_h, d_out) - 1  # second layer weights
-    b2 = np.zeros((1, d_out))  # second layer biaises
-
-    data = np.random.rand(N, d_in)  # create a random data
-    targets = np.random.rand(N, d_out)  # create a random targets
-
-    # Forward pass
-    a0 = data # the data are the input of the first layer
-    z1 = np.matmul(a0, w1) + b1  # input of the hidden layer
-    a1 = 1 / (1 + np.exp(-z1))  # output of the hidden layer (sigmoid activation function)
-    z2 = np.matmul(a1, w2) + b2  # input of the output layer
-    a2 = 1 / (1 + np.exp(-z2))  # output of the output layer (sigmoid activation function)
-    predictions = a2  # the predicted values are the outputs of the output layer
-
-    predictions.shape
-
-    # Compute loss (MSE)
-    loss = np.mean(np.square(predictions - targets))
-    print("\ntest de forward pass :\n")
-    print(loss)
 
     # Variables random pour les tests
 
@@ -255,7 +172,7 @@ if __name__ == "__main__":
 
     data_train = np.random.rand(N, d_in)
     labels_train = np.random.randint(0, d_out, size=(N,))
-    labels_train_one_hot = one_hot(labels_train, num_classes=d_out)
+    labels_train_one_hot = one_hot(labels_train)
 
     learning_rate = 0.1
     num_epoch = 9

@@ -1,86 +1,181 @@
 # CL-DL-Image_Classification
 
-**Projet**: Classification d'images (CIFAR-10) — implémentations pédagogiques de KNN et d'un MLP
+Ce projet vise à classifier les images issues de la base de données CIFAR-10 avec l'implémentation des algorithmes KNN et MLP via NumPy.
 
-Ce dépôt contient des scripts pédagogiques pour expérimenter deux approches de classification d'images sur le jeu CIFAR-10 :
-- un classifieur K-Nearest Neighbors (`knn.py`) ;
-- un perceptron multi-couches simple (MLP) entraîné par gradient descendant (`mlp.py`).
+## Description
 
-**But**: fournir un code clair et éducatif pour comprendre l'entraînement et l'évaluation de modèles basiques sur des données visuelles.
+Ce dépôt contient des implémentations de deux approches de classification : un classifieur K-Nearest Neighbors et un réseau de neurones simple (MLP).
 
-**Données**
-- **Emplacement**: les fichiers CIFAR-10 doivent être présents dans `data/cifar-10-batches-py` (les fichiers `data_batch_1..5` et `test_batch`).
-- **Téléchargement**: si vous n'avez pas les fichiers, téléchargez CIFAR-10 depuis https://www.cs.toronto.edu/~kriz/cifar.html puis placez l'archive extraite dans `data/`.
+Ces 2 implémentations sont réalisées et évaluées à l'aide de la bibliothèque NumPy.
 
-**Installation**
-- **Requis**: Python 3.8+ recommandé.
-- **Dépendances**: installer depuis le fichier `requirements.txt` :
+## Structure du dépôt
 
+```
+.
+├── mlp.py                          # Implémentation MLP
+├── knn.py                          # Implémentation KNN
+├── read_cifar.py                   # Utilitaires de chargement de données
+├── requirements.txt                # Dépendances
+├── README.md                       # Ce fichier
+├── data/
+│   └── cifar-10-batches-py/        # Données CIFAR-10
+└──results/                         # Graphiques de sortie
+    ├── knn.png
+    └── mlp.png
+```
+
+## Installation
+
+**requirements** :
 ```bash
 pip install -r requirements.txt
 ```
 
-- Remarque: si l'installation échoue à cause d'un package `matplot` introuvable, installez `matplotlib` manuellement :
+## Fichiers et explications techniques
 
-```bash
-pip install numpy matplotlib
-```
+### `read_cifar.py`
 
-**Usage rapide**
-- Pour tester la lecture des fichiers CIFAR:
+Ce fichier contient les utilitaires pour charger et prétraiter les données CIFAR-10.
 
-```bash
-python3 read_cifar.py
-```
+**Fonctions principales** :
 
-- Pour exécuter l'expérience KNN (génère `results/knn.png`):
+- **`read_cifar_batch(batch_path)`** : 
+  - Lit un fichier batch CIFAR-10 à l'aide de `pickle`.
+   - Convertit les données en `float32` et labels en `int64`.
+  - Retourne la matrice des images (taille : `(batch_size, 3072)`).
+ 
 
-```bash
-python3 knn.py
-```
+- **`read_cifar(directory_path)`** : 
+  - Boucle sur les 5 fichiers d'entraînement (`data_batch_1..5`) et le fichier de test (`test_batch`).
+  - Concatène toutes les données en un seul tableau NumPy.
+  - Retourne : données complètes (~60 000 images) et labels correspondants.
 
-- Pour entraîner et tester le MLP sur CIFAR-10 (génère `results/mlp.png`):
-
-```bash
-python3 mlp.py
-```
-
-- Les hyperparamètres (par ex. `d_h`, `learning_rate`, `num_epoch`) sont définis dans le bloc `if __name__ == "__main__"` de `mlp.py` et peuvent être modifiés directement.
-
-**Structure du dépôt**
-- `mlp.py` : implémentation d'un MLP à une couche cachée, fonctions d'entraînement, test et script d'entraînement complet sur CIFAR-10.
-- `knn.py` : implémentation vectorisée de KNN (distance L2, vote majoritaire) et script d'évaluation sur CIFAR-10.
-- `read_cifar.py` : utilitaires pour lire les fichiers CIFAR-10, concaténer et séparer train/test.
-- `requirements.txt` : dépendances Python (voir remarque ci‑dessus).
-- `data/` : dossier attendu contenant `cifar-10-batches-py`.
-- `results/` : dossiers de sortie pour graphiques (`knn.png`, `mlp.png`).
-
-**Conseils et notes**
-- Les scripts sont conçus pour être pédagogiques plutôt qu'optimisés pour la performance (par ex. pas d'utilisation de GPU).
-- Le MLP utilise un mini-batching simple : `batch_size = 64` (voir `train_mlp` dans `mlp.py`) et les gradients sont calculés sur chaque mini-batch. Les données ne sont cependant pas reshufflées automatiquement à chaque epoch (le mélange initial est effectué par `split_dataset` dans `read_cifar.py`).
-- Pour des entraînements plus robustes et rapides, envisagez d'utiliser `PyTorch`/`TensorFlow` et des optimisations supplémentaires (shuffle par epoch, mini-batches plus petits/grands selon l'optimiseur, normalisation, GPU).
-- Le fichier `requirements.txt` contient `matplot` (probable coquille). Si vous rencontrez une erreur, remplacez `matplot` par `matplotlib`.
-
-**Analyse des résultats**
-
-- **KNN (`knn.py`)** :
-	- Sortie attendue : un graphique `results/knn.png` affichant l'accuracy en fonction de `k` (nombre de voisins).
-	- Interprétation : lorsque vous utilisez les pixels bruts de CIFAR-10 comme caractéristiques, le KNN arrive généralement à des performances modestes (les images couleur non transformées sont difficiles à séparer par distance euclidienne simple). L'accuracy variera avec `k` — de petites valeurs de `k` peuvent être sensibles au bruit, des valeurs trop grandes peuvent lisser trop les classes.
-	- Pistes d'amélioration : extraction de caractéristiques (PCA, HOG), utilisation de descripteurs appris (features CNN), normalisation ou réduction de dimension, ou bien des variantes de distance/poids.
-
-- **MLP (`mlp.py`)** :
-	- Sortie attendue : un graphique `results/mlp.png` montrant l'évolution de l'accuracy d'entraînement par epoch et un affichage de l'accuracy sur le jeu de test.
-	- Observations typiques :
-		- la précision d'entraînement augmente au fil des epochs ; l'accuracy de test est généralement inférieure (écart dû à l'overfitting si le modèle est trop puissant ou mal régularisé).
-		- la vitesse d'apprentissage et la qualité finale dépendent fortement de l'architecture (`d_h`), du taux d'apprentissage (`learning_rate`), du `batch_size` et du nombre d'epochs (`num_epoch`).
-	- Pistes d'amélioration : shuffle des données à chaque epoch, normalisation des entrées (déjà divisées par 255 dans le script), régularisation (weight decay, dropout), optimiser l'initialisation, ou remplacer le MLP par un CNN pour des performances nettement supérieures sur CIFAR-10.
+- **`split_dataset(data, labels, split=0.8)`** :
+  - Mélange aléatoirement les indices des données.
+  - Sépare en ensemble d'entraînement (80% par défaut) et ensemble de test (20%).
+  - Retourne : `data_train`, `labels_train`, `data_test`, `labels_test`.
 
 
-**Exemples de commandes utiles**
-- Installer dépendances : `pip install -r requirements.txt` ou `pip install numpy matplotlib`.
-- Lancer le MLP : `python3 mlp.py`.
-- Lancer KNN : `python3 knn.py`.
 
-**Contact / Auteurs**
-- TP de Deep Learning — Centrale Lyon.
+### `knn.py`
+
+Implémentation vectorisée d'un classifieur K-Nearest Neighbors pour la classification multi-classe.
+
+**Fonctions principales** :
+
+- **`distance_matrix(X, Y)`** :
+  - Calcule la matrice des distances L2 entre tous les points de `X` et tous ceux de `Y`.
+  - Utilise la formule vectorisée : $\|a-b\|^2 = \|a\|^2 + \|b\|^2 - 2 a \cdot b$.
+  - Retourne : matrice de taille `(n_samples_X, n_samples_Y)`.
+  - implémentation vectorisée avec NumPy (pas de boucle for).
+
+- **`knn_predict(dists, labels_train, k)`** :
+  - Sélectionne les `k` plus proches voisins pour chaque exemple de test.
+  - Utilise `np.argpartition` pour trouver rapidement les `k` plus petites distances.
+  - Effectue un vote majoritaire parmi les `k` labels voisins.
+  - Retourne : tableau des labels prédits.
+
+- **`evaluate_knn(data_train, labels_train, data_test, labels_test, k, batch_size=500(optionnel))`** :
+  - Évalue l'accuracy du KNN sur l'ensemble de test.
+  - Traite les données par batch pour limiter la consommation mémoire (optionnel ici vis à vis de l'énoncé mais plus performant).
+  - Retourne : accuracy (proportion de prédictions correctes).
+
+**Script principal** :
+- Charge CIFAR-10 et le split train/test.
+- Teste différentes valeurs de `k` (de 1 à 20).
+- Génère `results/knn.png` : courbe d'accuracy en fonction de `k`.
+
+
+
+### `mlp.py`
+
+Implémentation d'un perceptron multi-couches (MLP) à une couche cachée, entraîné par rétropropagation avec descente de gradient.
+
+**Fonctions principales** :
+
+- **`sigmoid(x)` et `sigmoid_derivative(a)`** :
+  - Fonction d'activation sigmoïde : $\sigma(x) = \frac{1}{1 + e^{-x}}$.
+  - Dérivée : $\sigma'(a) = a(1-a)$.
+
+- **`one_hot(labels)`** :
+  - Convertit un vecteur de labels en matrice one-hot.
+  - Exemple : label `[1, 2, 0]` → matrice `(3, 3)` avec 1 dans les positions correspondantes.
+
+- **`learn_once_mse(w1, b1, w2, b2, data, targets, learning_rate)`** :
+  - Effectue une étape de gradient descendant avec **MSE (Mean Squared Error)** comme fonction coût.
+  - Forward pass : données → couche cachée (sigmoid) → couche de sortie (sigmoid).
+  - Backward pass : calcul des gradients via rétropropagation.
+  - Update : $w \leftarrow w - \text{learning\_rate} \times \nabla w$.
+  - Retourne : les poids/biais mis à jour et la valeur de la MSE.
+
+- **`learn_once_cross_entropy(w1, b1, w2, b2, data, targets, learning_rate)`** :
+  - Étape de gradient avec **cross-entropy** pour la classification multi-classe.
+  - Forward pass : données → couche cachée (sigmoid) → couche de sortie avec **softmax**.
+  - Softmax : $a_i = \frac{e^{z_i}}{\sum_j e^{z_j}}$ (probabilités normalisées).
+  - Loss cross-entropy : $-\sum_i y_i \log(a_i)$.
+  - Backward pass : gradients calculés en tenant compte du softmax.
+  - Retourne : les poids/biais mis à jour et la valeur de la cross-entropy.
+
+- **`train_mlp(w1, b1, w2, b2, data_train, labels_train, learning_rate, num_epoch)`** :
+  - Entraîne le MLP pendant `num_epoch` epochs complets.
+  - **Mini-batching** : traite les données par chunks de 64 exemples (Cette étape n'était pas demandée mais permet d'obtenir de meilleurs résultats : on passe de ~18% à ~45% d'accuracy avec une taille de 64 en mini-batch).
+  - Tous les 10 epochs, on affiche la loss et l'accuracy d'entraînement.
+  - Retourne : les poids/biais finaux et l'historique des accuracies.
+
+- **`test_mlp(w1, b1, w2, b2, data_test, labels_test)`** :
+  - Évalue le réseau entraîné sur les données de test.
+  - Forward pass uniquement.
+  - Retourne : l'accuracy sur les données de test.
+
+- **`run_mlp_training(data_train, labels_train, data_test, labels_test, d_h=64, learning_rate=0.1, num_epoch=100)`** :
+  - réalise les 3 étapes suivantes : initialisation, entraînement, évaluation.
+  - Initialisation aléatoire : $w \sim U(-1, 1)$, $b = 0$.
+  - Normalisation : données divisées par 255 (correspondant à la valeur max pour un pixel donné).
+  - Retourne : la liste des accuracies d'entraînement et l'accuracy finale sur test.
+
+**Script principal** :
+- Effectue plusieurs tests unitaires (forward pass, loss, gradients).
+- Charge CIFAR-10, entraîne un MLP avec les hyperparamètres définis.
+- Affiche l'accuracy finale sur le jeu de test.
+- Génère `results/mlp.png` : courbe d'évolution de l'accuracy d'entraînement par epoch.
+
+**Hyperparamètres modifiables** (dans le bloc `if __name__ == "__main__"`) :
+- `d_h` : nombre de neurons dans la couche cachée (par défaut 64).
+- `learning_rate` : taux d'apprentissage (par défaut 0.1).
+- `num_epoch` : nombre d'epochs d'entraînement (par défaut 100).
+- `batch_size` : taille des mini-batchs (par défaut 64, dans `train_mlp`).
+
+**Résultats attendus** :
+- L'accuracy d'entraînement augmente généralement au fil des epochs.
+- L'accuracy de test converge mais peut être inférieure à celle d'entraînement (overfitting possible).
+- Performances typiques : ~45% sur CIFAR-10 (réseau simple sans augmentation de données ni CNN).
+
+
+## Usage et interprétation
+
+1. **Tester l'extraction des données** :
+   ```bash
+   python3 read_cifar.py
+   ```
+   Affiche les formes des données.
+
+2. **Tester KNN** :
+   ```bash
+   python3 knn.py
+   ```
+   Génère `results/knn.png`. Observez comment l'accuracy change avec `k`.
+
+**Résultats observés** :
+- Sur CIFAR-10 avec pixels bruts, les performances restent modestes (~30-35%) car KNN est assez peu adapté aux traitements d'images.
+
+3. **Tester MLP** :
+   ```bash
+   python3 mlp.py
+   ```
+   Génère `results/mlp.png`. Observez la courbe d'entraînement et l'accuracy finale.
+
+**Résultats observés** :
+- L'accuracy d'entraînement augmente au fil des epochs et semble converger.
+- L'accuracy de test est légèrement plus faible que celle d'entrainement mais néanmoins très proche donc pas d'overfitting.
+- On obtient finalement ~45% d'accuracy sur CIFAR-10 avec le mini-batching contre 18% sans. Ces résultats relativement faiblent s'expliquent par la simplicité du modèle : une seule couche cachée de 64 neurones.
 
