@@ -26,7 +26,7 @@ def learn_once_mse(w1, b1, w2, b2, data, targets, learning_rate):
     z2 = a1 @ w2 + b2
     a2 = sigmoid(z2)
     
-    # Calcul du loss (MSE)
+    # Calcul de la loss (MSE)
     loss = np.mean((a2 - targets) ** 2)
     
     # Backpropagation
@@ -36,7 +36,6 @@ def learn_once_mse(w1, b1, w2, b2, data, targets, learning_rate):
 
     dC_da2 = 2 * (a2 - targets) / (batch_size * d_out)  # gradient MSE
     da2_dz2 = sigmoid_derivative(a2)
-    dz2_dw2 = a1.T
     
     dz2 = dC_da2 * da2_dz2
     dw2 = dz2.T @ a1
